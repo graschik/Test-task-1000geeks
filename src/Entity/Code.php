@@ -30,12 +30,12 @@ class Code
     /**
      * @ORM\Column(name="date", type="datetime")
      * @Assert\NotBlank()
-     * @Assert\DateTime()
+     * @Assert\DateTime(format="Y-m-d H:i:s")
      */
     private $date;
 
     /**
-     * @ORM\Column(name="code", type="string", length=10)
+     * @ORM\Column(name="code", type="string", length=10, unique=true)
      * @Assert\NotBlank()
      */
     private $code;

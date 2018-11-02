@@ -7,8 +7,10 @@ namespace App\Service;
 
 use App\Entity\Code;
 use App\Repository\CodeRepository;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\ORMException;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class CodeService
 {
@@ -27,13 +29,26 @@ class CodeService
      * @var EntityManagerInterface
      */
     private $entityManager;
+    /**
+     * @var ValidatorInterface
+     */
+    private $validator;
 
-    public function __construct(EntityManagerInterface $entityManager)
+    /**
+     * CodeService constructor.
+     * @param EntityManagerInterface $entityManager
+     * @param ValidatorInterface $validator
+     */
+    public function __construct(EntityManagerInterface $entityManager, ValidatorInterface $validator)
     {
         $this->entityManager = $entityManager;
         $this->codeRepository = $entityManager->getRepository(Code::class);
+        $this->validator = $validator;
     }
 
+    /**
+     * @return string
+     */
     public function generateCode(): string
     {
         $code = [];
@@ -52,27 +67,46 @@ class CodeService
 
     }
 
+    /**
+     * @param string $code
+     * @return bool
+     */
     public function writeCode(string $code): bool
     {
-        try{
-            $codeObject = new Code();
-            $codeObject->setCode($code);
-            $codeObject->setDate((new \DateTime("now", new \DateTimeZone('Europe/Belarus')))->format('Y-m-d H:i:s e'));
+        $codeObject = new Code();
+        $codeObject->setCode($code);
+        $codeObject->setDate((new \DateTime("now", new \DateTimeZone("Europe/Minsk"))));
 
+        if (count($this->validator->validate($codeObject)) == 0) {
             $this->entityManager->persist($codeObject);
             $this->entityManager->flush();
+
             return true;
-        }catch (ORMException $exception){
-            return false;
         }
+        return false;
     }
 
+    /**
+     * @param int $count
+     */
     public function generateAndWriteCodes(int $count = 1)
     {
         for ($i = 0; $i < $count; $i++) {
             $code = $this->generateCode();
-            $this->writeCode($code);
+            if (!$this->writeCode($code)) {
+                $i--;
+            }
         }
     }
 
+    /**
+     * @param string $code
+     * @return Code|null|object
+     */
+    public function getCodeInfo(string $code)
+    {
+        return $this
+            ->codeRepository
+            ->findOneBy(['code' => $code]);
+    }
 }
