@@ -88,15 +88,19 @@ class CodeService
 
     /**
      * @param int $count
+     * @return array
      */
     public function generateAndWriteCodes(int $count = 1)
     {
+        $codes = [];
         for ($i = 0; $i < $count; $i++) {
             $code = $this->generateCode();
             if (!$this->writeCode($code)) {
                 $i--;
             }
+            array_push($codes, $code);
         }
+        return $codes;
     }
 
     /**
