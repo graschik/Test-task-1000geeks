@@ -24,6 +24,24 @@ class CodeController extends FOSRestController
         $this->codeService = $codeService;
     }
 
+
+    /**
+     * @Rest\Get("/{code}", name="get.code",
+     *     requirements={"code" = "[\w+]{10}"}
+     *     )
+     * @param Request $request
+     * @param string $code
+     * @return View
+     */
+    public function getCode(Request $request, string $code)
+    {
+        $codeInfo = $this->codeService->getCodeInfo($code);
+        if (!$codeInfo ) {
+            return View::create("Code not found!", Response::HTTP_NOT_FOUND);
+        }
+        return View::create($codeInfo, Response::HTTP_OK);
+    }
+    
     /**
      * @param Request $request
      * @param int $nb
